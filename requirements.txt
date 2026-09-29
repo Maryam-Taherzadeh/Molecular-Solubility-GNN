@@ -1,6 +1,6 @@
 torch
 torch-geometric
-rdkit
+rdkit==2026.3.6
 pandas
 numpy
 scikit-learn
