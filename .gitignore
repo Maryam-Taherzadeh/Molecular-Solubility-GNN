@@ -9,3 +9,4 @@ env/
 .idea/
 .vscode/
 notebooks/03_AqSolDB_Applicability_Domain.ipynb
+.agents/
