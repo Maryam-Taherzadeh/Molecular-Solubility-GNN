@@ -1,7 +1,4 @@
-## Author
 
-**Maryam Taherzadeh**  
-Computational Scientist | AI/ML for Drug Discovery
 
 # Molecular Solubility Prediction with Graph Neural Networks
 
@@ -223,4 +220,8 @@ A Streamlit application is planned to allow users to:
 - NumPy
 - scikit-learn
 - Optuna
+  
+## Author
 
+**Maryam Taherzadeh**  
+Computational Scientist | AI/ML for Drug Discovery
