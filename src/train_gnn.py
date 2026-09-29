@@ -199,7 +199,7 @@ def set_random_seed(seed: int) -> None:
 # 4. PROJECT PATHS
 # ============================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 PROCESSED_DIR = (
     PROJECT_ROOT
