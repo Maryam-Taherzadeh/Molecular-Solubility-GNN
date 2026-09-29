@@ -1,39 +1,34 @@
-# Molecular-Solubility-GNN
-Aqueous solubility prediction using GCN and GAT models with random and scaffold-based evaluation on AqSolDB.
-# 🧪 Molecular Solubility Prediction with Graph Neural Networks
+## Author
 
-A molecular machine learning project for predicting aqueous solubility (**logS**) directly from molecular structure using **Graph Neural Networks (GNNs)** trained on the **AqSolDB** dataset.
+**Maryam Taherzadeh**  
+Computational Scientist | AI/ML for Drug Discovery
 
-This project compares **Graph Convolutional Networks (GCN)** and **Graph Attention Networks (GAT)** under both **random** and **Bemis–Murcko scaffold-based** data splitting strategies to evaluate predictive performance and molecular generalization.
+# Molecular Solubility Prediction with Graph Neural Networks
 
----
+Aqueous solubility (**logS**) prediction using Graph Convolutional Networks (**GCN**) and Graph Attention Networks (**GAT**) trained on **AqSolDB**, with random and Bemis–Murcko scaffold-based evaluation.
 
-## 🔬 Project Overview
+## Project Overview
 
-Aqueous solubility is an important molecular property in drug discovery because it influences compound behavior, formulation, exposure, and downstream candidate prioritization.
+This project predicts aqueous solubility directly from molecular structure. SMILES strings are converted into molecular graphs using RDKit and PyTorch Geometric, then used to train graph-level regression models.
 
-In this project, molecular structures represented as SMILES are converted into molecular graphs using **RDKit** and **PyTorch Geometric**.
+The project includes:
 
-Each molecule is represented as:
+- AqSolDB data preparation
+- Molecular graph construction
+- GCN and GAT training
+- Evaluation using random and scaffold splits
+- An exploratory Optuna hyperparameter search
+- A saved scaffold-trained GCN checkpoint for downstream prediction
 
-- **Atoms → graph nodes**
-- **Covalent bonds → bidirectional graph edges**
-- **Experimental logS → graph-level regression target**
+## Molecular Graph Representation
 
-Two graph neural network architectures were developed and compared:
+Each molecule is represented as a graph:
 
-- Graph Convolutional Network (**GCN**)
-- Graph Attention Network (**GAT**)
+- **Nodes:** atoms
+- **Edges:** covalent bonds represented in both directions
+- **Target:** experimental logS
 
----
-
-## 🧬 Molecular Graph Representation
-
-Each molecule is converted from SMILES into a PyTorch Geometric graph.
-
-### Atom Features
-
-Each atom is represented using:
+Atom features include:
 
 - Element identity
 - Atomic degree
@@ -44,42 +39,38 @@ Each atom is represented using:
 - Ring membership
 - Scaled atomic mass
 
-Covalent bonds are represented as bidirectional graph edges.
+Both models use the same molecular graph representation and preprocessing workflow.
 
----
+## Model Architectures
 
-## 🧠 GNN Architectures
+### Graph Convolutional Network
 
-### Graph Convolutional Network (GCN)
+The GCN aggregates information from neighboring atoms through graph convolutional layers. The resulting node representations are pooled into a molecular embedding and passed through a regression head to predict logS.
 
-The GCN architecture performs neighborhood aggregation using graph convolutional layers to learn molecular representations from local atomic environments.
+### Graph Attention Network
 
-The learned graph representation is pooled into a molecular-level embedding and passed through a regression head to predict aqueous solubility.
+The GAT learns attention weights that allow neighboring atoms to contribute differently during message passing. The node representations are then pooled and passed through a regression head.
 
-### Graph Attention Network (GAT)
-
-The GAT architecture uses learned attention coefficients during message passing, allowing neighboring atoms to contribute differently to the learned molecular representation.
-
-Both GCN and GAT models use the same molecular graph representation and preprocessing workflow to enable a consistent comparison.
-
----
-
-## 🧪 Experimental Design
+## Experimental Design
 
 Four experiments were performed:
 
-1. **GCN — Random Split**
-2. **GAT — Random Split**
-3. **GCN — Bemis–Murcko Scaffold Split**
-4. **GAT — Bemis–Murcko Scaffold Split**
+| Model | Data Split |
+|---|---|
+| GCN | Random |
+| GAT | Random |
+| GCN | Bemis–Murcko scaffold |
+| GAT | Bemis–Murcko scaffold |
 
-Random splitting evaluates performance when structurally related compounds may occur across training and test sets.
+**Random splitting** allows structurally related compounds to appear across training, validation, and test sets.
 
-The scaffold split provides a more stringent evaluation by separating molecules according to their **Bemis–Murcko molecular scaffolds**, providing a stronger test of generalization to structurally distinct compounds.
+**Scaffold splitting** groups molecules by their Bemis–Murcko scaffolds and assigns these groups to separate sets. This evaluates performance on held-out scaffolds, although molecules with different scaffolds can still share structural features.
 
----
+Validation data were used for checkpoint selection and early stopping. Test data were used for final evaluation.
 
-## 📊 Model Performance
+## Model Performance
+
+RMSE and MAE are reported on the original logS scale.
 
 | Model | Split | Best Epoch | Validation RMSE | Validation MAE | Validation R² | Test RMSE | Test MAE | Test R² |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
@@ -88,184 +79,148 @@ The scaffold split provides a more stringent evaluation by separating molecules 
 | GCN | Random | 93 | **0.903** | **0.655** | **0.856** | **0.980** | **0.662** | **0.821** |
 | GCN | Scaffold | 154 | 1.057 | 0.715 | 0.813 | 1.095 | 0.751 | 0.786 |
 
-### Best Numerical Performance
+### Results Summary
 
-The **GCN with random splitting** achieved the strongest numerical test performance:
+GCN achieved lower test RMSE and MAE than GAT under both splitting strategies in the reported runs.
 
-- **Test R²:** 0.821
-- **Test RMSE:** 0.980
-- **Test MAE:** 0.662
+The random-split GCN achieved the strongest numerical test performance:
 
-### Selected Model for Downstream Prediction
+- **RMSE:** 0.980
+- **MAE:** 0.662
+- **R²:** 0.821
 
-The **GCN with Bemis–Murcko scaffold splitting** was retained for downstream solubility prediction because scaffold-based evaluation provides a more stringent assessment of generalization to structurally distinct molecules.
+The scaffold-trained GCN was retained for downstream prediction, with:
 
-Its independent test performance was:
+- **RMSE:** 1.095
+- **MAE:** 0.751
+- **R²:** 0.786
 
-- **Test R²:** 0.786
-- **Test RMSE:** 1.095
-- **Test MAE:** 0.751
+Scaffold evaluation provides evidence about performance on held-out scaffolds. It does not, by itself, establish that the scaffold-trained model is more accurate for every new molecule.
 
----
+## Training Strategy
 
-## ⚙️ Training Strategy
+The main experiments used the following training setup:
 
-The GNN models were trained for graph-level regression using:
+| Setting | Value |
+|---|---|
+| Loss function | Mean Squared Error |
+| Optimizer | AdamW |
+| Initial learning rate | 0.001 |
+| Weight decay | 0.00001 |
+| Hidden dimension | 128 |
+| Graph layers | 3 |
+| Dropout | 0.20 |
+| Batch size | 64 |
+| Maximum epochs | 300 |
+| Early-stopping patience | 40 |
+| Random seed | 42 |
 
-- **Loss:** Mean Squared Error (MSE)
-- **Optimizer:** AdamW
-- **Initial learning rate:** 1 × 10⁻³
-- **Weight decay:** 1 × 10⁻⁵
-- **Hidden dimension:** 128
-- **Graph layers:** 3
-- **Dropout:** 0.20
-- **Batch size:** 64
-- **Maximum epochs:** 300
-- **Early-stopping patience:** 40
-- **Random seed:** 42
+Experimental logS values were standardized using statistics calculated from the training set only.
 
-Validation RMSE was used for model monitoring and early stopping.
+Validation RMSE was used for model monitoring and early stopping. The best model checkpoint was restored before final evaluation, and performance metrics were calculated on the original logS scale.
 
-The best model checkpoint was restored before final evaluation.
+Experiment-specific settings are recorded in the `configuration.json` files within `results/`.
 
-Experimental logS values were standardized using statistics calculated from the **training set only**, and final performance metrics were reported on the original logS scale.
+## Exploratory Hyperparameter Search
 
----
+An exploratory Optuna search was performed for the scaffold-split GCN.
 
-## 📏 Evaluation Metrics
+| Configuration | Validation RMSE |
+|---|---:|
+| Baseline GCN | **1.056744** |
+| Best Optuna trial | 1.057174 |
 
-Model performance was evaluated using:
+The search did not improve validation RMSE, so the Optuna configuration was not used in the final model. The baseline scaffold-trained GCN was retained.
 
-### Root Mean Squared Error (RMSE)
+The optimization notebook is included as a record of this experiment.
 
-Measures the typical magnitude of prediction error while giving larger errors greater weight.
+## Evaluation Metrics
 
-### Mean Absolute Error (MAE)
+- **RMSE:** measures prediction error while giving greater weight to larger errors.
+- **MAE:** measures the average absolute difference between experimental and predicted logS.
+- **R²:** measures performance relative to predicting the evaluation-set mean; higher values indicate better agreement.
 
-Measures the average absolute difference between experimental and predicted logS.
+## Workflow
 
-### Coefficient of Determination (R²)
+1. Clean and prepare AqSolDB data.
+2. Create random and scaffold-based data splits.
+3. Convert SMILES into molecular graphs.
+4. Calculate target-standardization statistics from the training set.
+5. Train GCN and GAT models.
+6. Select checkpoints using validation RMSE.
+7. Evaluate predictions on the held-out test sets.
+8. Compare results and retain the scaffold-trained GCN checkpoint.
 
-Measures the fraction of variance in experimental solubility explained by the model.
+## Repository Contents
 
----
+| Path | Description |
+|---|---|
+| `data/processed/` | Cleaned AqSolDB data, split datasets, and split summaries |
+| `src/prepare_aqsoldb.py` | Data preparation |
+| `src/train_gnn.py` | GNN training and evaluation |
+| `src/optimize_gcn.py` | Exploratory GCN hyperparameter search |
+| `notebooks/01_GNN_Solubility_Training.ipynb` | Training workflow and model evaluation |
+| `notebooks/02_GCN_Optimization.ipynb` | Optuna experiments |
+| `models/gcn_scaffold_best.pt` | Saved baseline scaffold-trained GCN checkpoint |
+| `results/gcn_random/` | Random-split GCN results |
+| `results/gcn_scaffold/` | Scaffold-split GCN results |
+| `results/gat_random/` | Random-split GAT results |
+| `results/gat_scaffold/` | Scaffold-split GAT results |
+| `requirements.txt` | Python dependencies |
 
-## 🔄 Workflow
+Each main experiment directory contains:
 
-```text
-AqSolDB
-    │
-    ▼
-Data Preprocessing
-    │
-    ▼
-SMILES
-    │
-    ▼
-RDKit Molecular Graph Construction
-    │
-    ▼
-Atom Features + Bond Connectivity
-    │
-    ├───────────────┐
-    ▼               ▼
-   GCN             GAT
-    │               │
-    └───────┬───────┘
-            ▼
-   Random / Scaffold Split
-            │
-            ▼
-      Model Training
-            │
-            ▼
- Validation & Early Stopping
-            │
-            ▼
-       Test Evaluation
-            │
-            ▼
-     Model Comparison
-            │
-            ▼
-  Scaffold GCN Selection
-            │
-            ▼
-     logS Prediction
+- `configuration.json`
+- `metrics.json`
+- `training_history.csv`
+- `train_predictions.csv`
+- `validation_predictions.csv`
+- `test_predictions.csv`
+
+## Getting Started
+
+Clone the repository and enter the project directory:
+
+```bash
+git clone https://github.com/Maryam-Taherzadeh/Molecular-Solubility-GNN.git
+cd Molecular-Solubility-GNN
 ```
 
----
+Install the dependencies in your Python environment:
 
-## 🚀 Interactive Solubility Predictor
+```bash
+pip install -r requirements.txt
+```
 
-An interactive **Streamlit application** will use the selected scaffold-based GCN model for molecular solubility prediction.
+Open `notebooks/01_GNN_Solubility_Training.ipynb` in a Jupyter-compatible environment to review the training and evaluation workflow.
 
-The application will allow users to:
+The separate optimization experiments are documented in `notebooks/02_GCN_Optimization.ipynb`.
 
-- Enter a molecular SMILES string
-- Validate the molecular structure
-- Visualize the molecule
+## Limitations
+
+- The reported comparison uses a single random seed and does not measure variability across repeated runs.
+- Random and scaffold experiments use different test sets, so their metrics reflect differences in both training and evaluation data.
+- Scaffold splitting does not eliminate all structural similarity between sets.
+- Aggregate test metrics do not provide uncertainty estimates for individual predictions.
+- The small Optuna search does not establish that further tuning would be ineffective.
+
+## Planned Extension
+
+A Streamlit application is planned to allow users to:
+
+- Enter a SMILES string
+- Validate and visualize the molecular structure
 - Convert the molecule into a graph
-- Run GCN inference
-- Obtain predicted aqueous solubility (**logS**)
+- Generate a logS prediction using the saved GCN model
 
----
+## Technology Stack
 
-## 📁 Repository Structure
+- Python
+- PyTorch
+- PyTorch Geometric
+- RDKit
+- pandas
+- NumPy
+- scikit-learn
+- Optuna
 
-```text
-molecular-solubility-gnn/
-│
-├── README.md
-├── app.py
-├── requirements.txt
-│
-├── src/
-│   ├── model.py
-│   ├── featurization.py
-│   ├── predict.py
-│   └── train_gnn.py
-│
-├── models/
-│   └── gcn_scaffold_best.pt
-│
-├── notebooks/
-│   └── GNN_Solubility_Modeling.ipynb
-│
-├── figures/
-│   ├── model_comparison.png
-│   └── predicted_vs_experimental.png
-│
-└── data/
-    └── README.md
-```
-
----
-
-## 🛠️ Technology Stack
-
-- **Python**
-- **PyTorch**
-- **PyTorch Geometric**
-- **RDKit**
-- **Pandas**
-- **NumPy**
-- **scikit-learn**
-- **Streamlit**
-
----
-
-## 💡 Key Takeaway
-
-The experiments demonstrate the importance of evaluating molecular machine-learning models beyond random train/test splitting.
-
-Although the random-split GCN achieved the highest numerical performance (**R² = 0.821**), the scaffold-based evaluation provides a more challenging assessment of generalization to structurally distinct molecules.
-
-For this reason, the **scaffold-based GCN** was selected as the downstream aqueous-solubility prediction model.
-
----
-
-## 👩‍💻 Author
-
-**Maryam Taherzadeh**  
-Computational Scientist | AI/ML for Drug Discovery
