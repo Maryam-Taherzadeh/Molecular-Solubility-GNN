@@ -2,32 +2,21 @@
 
 Aqueous solubility (**logS**) prediction using Graph Convolutional Networks (**GCN**) and Graph Attention Networks (**GAT**) trained on **AqSolDB**, with both random and Bemis–Murcko scaffold-based evaluation.
 
-The repository includes the complete model-development workflow as well as a deployed **Streamlit application** for single-molecule inference using the scaffold-trained GCN model.
+This repository includes the complete model-development workflow and a deployed **Streamlit application** for single-molecule inference using the scaffold-trained GCN model.
 
 ---
 
 ## Live Demo
 
-An interactive Streamlit application is available for molecular solubility prediction.
+[🚀 Launch the Solubility Predictor](https://molecular-solubility-gnn.streamlit.app/)
 
-**Streamlit App:**  
-`ADD_YOUR_STREAMLIT_APP_URL_HERE`
-
-The application supports:
-
-- Molecule name or SMILES input
-- PubChem name-to-SMILES lookup
-- GCN-based logS prediction
-- Molecular descriptor calculation
-- Comparison with predictions from the held-out scaffold test set
-- Model performance display
-- Downloadable PDF prediction reports
+The application supports molecule name or SMILES input, GCN-based logS prediction, molecular descriptors, comparison with scaffold test-set predictions, and downloadable PDF reports.
 
 ---
 
 ## Project Overview
 
-Aqueous solubility is an important molecular property in medicinal chemistry and drug discovery because poor solubility can affect compound formulation, bioavailability, and experimental usability.
+Aqueous solubility is an important molecular property in medicinal chemistry and drug discovery because poor solubility can affect formulation, bioavailability, and experimental usability.
 
 This project predicts aqueous solubility directly from molecular structure.
 
@@ -57,11 +46,9 @@ Each molecule is represented as a graph:
 - **Edges:** covalent bonds represented in both directions
 - **Target:** experimental aqueous solubility, logS
 
-Each atom is represented using features describing its local chemical environment.
-
 ### Atom Features
 
-The current graph representation includes:
+Each atom is represented using features describing its local chemical environment:
 
 - Element identity
 - Atomic degree
@@ -86,7 +73,7 @@ GCN and GAT models use the same molecular graph representation and preprocessing
 
 The GCN applies graph convolutional layers to aggregate information from neighboring atoms.
 
-The general architecture is:
+The architecture is:
 
 ```text
 Molecular Graph
@@ -108,13 +95,13 @@ Regression Head
 Predicted logS
 ```
 
-Node representations are pooled into a fixed-length molecular embedding using global mean pooling before regression.
+Node representations are pooled into a fixed-length molecular embedding before regression.
 
 ### Graph Attention Network
 
-The GAT uses attention-based message passing so that neighboring atoms can contribute differently to the learned node representation.
+The GAT uses attention-based message passing so neighboring atoms can contribute differently to the learned representation.
 
-After the graph-attention layers, node embeddings are pooled into a molecular representation and passed through a regression head to predict logS.
+After graph-attention layers, node embeddings are pooled into a molecular representation and passed through a regression head to predict logS.
 
 ---
 
@@ -137,19 +124,17 @@ This can result in structurally related compounds appearing in different subsets
 
 ### Scaffold Split
 
-Scaffold splitting groups compounds using their **Bemis–Murcko scaffolds** before assigning groups to training, validation, and test sets.
+Scaffold splitting groups compounds using their **Bemis–Murcko scaffolds** before assigning them to training, validation, and test sets.
 
 This provides a more challenging evaluation because the test set contains scaffolds that were held out during training.
 
 Scaffold splitting does not guarantee complete structural dissimilarity between all molecules, but it provides a stronger test of structural generalization than a conventional random split.
 
-### Dataset Usage
-
 Validation data were used for:
 
-- model monitoring
-- early stopping
-- checkpoint selection
+- Model monitoring
+- Early stopping
+- Checkpoint selection
 
 The test sets were reserved for final evaluation.
 
@@ -245,7 +230,7 @@ The training pipeline performs the following steps:
 1. Load the prepared AqSolDB split.
 2. Convert SMILES strings into PyTorch Geometric molecular graphs.
 3. Calculate target normalization statistics from the training set only.
-4. Standardize the training targets.
+4. Standardize training targets.
 5. Train the selected graph neural network.
 6. Monitor validation RMSE.
 7. Apply early stopping when validation performance stops improving.
@@ -265,7 +250,7 @@ Optimization is performed using:
 
 ## Exploratory Hyperparameter Search
 
-An exploratory **Optuna** hyperparameter search was also performed for the scaffold-split GCN.
+An exploratory **Optuna** hyperparameter search was performed for the scaffold-split GCN.
 
 | Configuration | Validation RMSE |
 |---|---:|
@@ -281,8 +266,6 @@ The optimization workflow is preserved in the repository for reproducibility and
 ---
 
 ## Evaluation Metrics
-
-Three regression metrics are reported.
 
 ### RMSE
 
@@ -314,8 +297,6 @@ Higher values indicate stronger agreement between predicted and experimental val
 
 The saved scaffold-trained GCN can be used without retraining.
 
-The inference pipeline is:
-
 ```text
 Molecule name or SMILES
           ↓
@@ -336,7 +317,7 @@ Inverse target transformation
 Predicted logS
 ```
 
-For molecule names, the Streamlit application can query **PubChem** to obtain the corresponding SMILES representation.
+For molecule names, the Streamlit application queries **PubChem** to obtain the corresponding SMILES representation.
 
 ---
 
@@ -362,13 +343,13 @@ Users can:
 - Enter a molecule name
 - Resolve molecule names through PubChem
 - Validate molecular structures using RDKit
-- Convert the molecule into graph features matching the training pipeline
+- Convert molecules into graph features matching the training pipeline
 - Generate a GCN-based logS prediction
 - View model-derived approximate molar solubility
 - View qualitative solubility classification
 - Calculate molecular descriptors
-- Compare the prediction against real scaffold-test model predictions
-- Review the model's held-out test performance
+- Compare predictions against real scaffold-test model predictions
+- Review held-out test performance
 - Download a PDF prediction report
 
 ### Molecular Descriptors
@@ -471,21 +452,13 @@ Example:
 python src/predict_gnn.py --smiles "CCO"
 ```
 
-Example input:
-
-```text
-CCO
-```
-
-corresponds to ethanol.
-
 The script:
 
-1. loads the saved GCN checkpoint
-2. generates molecular graph features
-3. performs inference
-4. reverses target standardization
-5. reports the predicted logS value
+1. Loads the saved GCN checkpoint
+2. Generates molecular graph features
+3. Performs inference
+4. Reverses target standardization
+5. Reports the predicted logS value
 
 ---
 
@@ -535,15 +508,13 @@ This allows the saved model to be evaluated without retraining the GNN.
 
 ## Limitations
 
-Several limitations should be considered when interpreting the reported results.
-
-- The primary model comparison uses a single random seed and therefore does not quantify variability across repeated runs.
+- The primary model comparison uses a single random seed and does not quantify variability across repeated runs.
 - Random-split and scaffold-split experiments use different test sets, so their metrics reflect both training and evaluation-set differences.
 - Scaffold splitting reduces direct scaffold overlap but does not eliminate all structural similarity between datasets.
 - Aggregate test metrics do not provide molecule-specific prediction uncertainty.
 - The exploratory Optuna search was limited and does not establish that additional optimization could not improve performance.
 - Predictions for molecules far outside the training distribution may be less reliable.
-- The conversion from predicted logS to molar solubility is derived directly from the model prediction and inherits the model's prediction uncertainty.
+- The conversion from predicted logS to molar solubility inherits the uncertainty of the model prediction.
 - The model should be considered a computational prioritization tool rather than a substitute for experimental solubility measurements.
 
 ---
@@ -556,14 +527,12 @@ Potential extensions include:
 - Prediction uncertainty estimation
 - Repeated scaffold-split evaluation
 - Ensemble GNN models
-- Additional molecular descriptors
-- Edge/bond features in message passing
+- Edge and bond features in message passing
 - Molecular fingerprints combined with GNN embeddings
 - Transformer-based molecular representations
-- Additional solubility datasets
 - External validation
 - Explainability and atom-level attribution
-- Hyperparameter optimization at larger scale
+- Larger-scale hyperparameter optimization
 
 ---
 
