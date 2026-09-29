@@ -912,19 +912,19 @@ if st.button(
             "Molecule"
         )
 
-        molecule_image = Draw.MolToImage(
-            molecule,
-            size=(
-                420,
-                300,
-            ),
-        )
+        # molecule_image = Draw.MolToImage(
+        #     molecule,
+        #     size=(
+        #         420,
+        #         300,
+        #     ),
+        # )
 
-        st.image(
-            molecule_image,
-            caption=smiles,
-            use_container_width=True,
-        )
+        # st.image(
+        #     molecule_image,
+        #     caption=smiles,
+        #     use_container_width=True,
+        # )
 
         st.caption(
             f"Resolved from: {source}"
