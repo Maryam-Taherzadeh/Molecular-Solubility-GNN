@@ -13,7 +13,8 @@ import torch
 import torch.nn.functional as F
 from fpdf import FPDF
 from rdkit import Chem
-from rdkit.Chem import Descriptors, Draw, rdMolDescriptors
+# from rdkit.Chem import Descriptors, Draw, rdMolDescriptors
+from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem.rdchem import Atom, HybridizationType
 from torch import nn
 from torch_geometric.data import Data
